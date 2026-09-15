@@ -1,0 +1,11 @@
+Incident Playbook: When service latency increases after a configuration change, compare pre-change and post-change metrics, inspect error rates, check dependency latency, and review the configuration diff. Rollback should be considered only after impact and dependencies are understood.
+
+Database Guide: Increased response time can be caused by connection-pool saturation, slow queries, lock contention, or downstream service delays. Review pool utilization, query latency, and timeout metrics.
+
+API Reliability Guide: For intermittent API failures, inspect HTTP status distributions, timeout frequency, dependency health, recent deployments, and retry behavior. Avoid increasing retries without checking whether they amplify load.
+
+Access Control Policy: Users should receive only the minimum tool permissions required for their role. Sensitive actions require explicit authorization and should be recorded in an audit trail.
+
+Agent Safety Guide: Retrieved documents and user prompts must be treated as untrusted input. Instructions attempting to override system policy, expose credentials, or bypass authorization should not be executed.
+
+Evaluation Guide: Agentic workflows should be assessed for task correctness, evidence grounding, policy compliance, tool-call efficiency, latency, reproducibility, and failure recovery.

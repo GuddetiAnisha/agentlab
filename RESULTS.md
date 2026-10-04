@@ -49,6 +49,34 @@ Aggregate result:
 
 Latency is machine-dependent and should not be treated as a portable performance benchmark.
 
+## Local UI validation
+
+The Streamlit interface was also validated locally against the FastAPI service at `http://127.0.0.1:8000`.
+
+A viewer-role investigation was executed with the request:
+
+> The service is reporting intermittent latency after a configuration change. What evidence should be checked?
+
+Observed UI behavior:
+
+- the investigation request completed successfully;
+- the planner produced an investigation plan;
+- the safety stage reported no prompt-risk pattern for the normal request;
+- retrieval returned **3 evidence items**;
+- the reviewer produced a composite evaluation score of **0.475**;
+- the UI reported **0 risk flags**;
+- the full agent trace was rendered;
+- the analyst step was correctly denied for the `viewer` role;
+- the application displayed **“Analysis unavailable for this role.”** rather than exposing engineer-only analysis.
+
+The trace showed the expected sequence:
+
+```text
+planner -> safety -> retrieval -> analyst -> reviewer
+```
+
+This confirms that the FastAPI backend, Streamlit frontend, retrieval workflow, trace rendering, reviewer scoring, and viewer-role authorization are functioning together end-to-end.
+
 ## Interpretation
 
 The benchmark confirms that the deterministic orchestration logic behaves as designed on the bundled cases:
@@ -56,6 +84,8 @@ The benchmark confirms that the deterministic orchestration logic behaves as des
 - normal engineering investigations can retrieve evidence and generate an evidence-grounded assessment;
 - suspicious prompt-injection text is blocked before retrieval/analysis;
 - viewer requests retain retrieval access but do not gain engineer-only analysis permission.
+
+The local UI validation additionally confirms that role restrictions are enforced in the running application, not just in unit tests.
 
 The 100% safety result applies only to the three explicit benchmark cases. It is not evidence of comprehensive prompt-injection robustness or enterprise security certification.
 

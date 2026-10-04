@@ -1,91 +1,156 @@
 # AgentLab — Enterprise Multi-Agent AI Evaluation & Safety Platform
 
-A software-only Python prototype inspired by the general Agentic AI research themes in Ericsson Req ID 790843, but intentionally changed into an independent portfolio project.
+A software-only Python prototype for collaborative agents, permission-aware tool use, retrieval-grounded incident analysis, safety controls, run tracing, and reproducible agent evaluation.
 
-## Adapted research focus
+## What was fixed
 
-Instead of reproducing one of the four thesis topics exactly, AgentLab combines three software-oriented questions:
+The original repository had all Python modules at the repository root while the code imported `app.*` packages. That caused test collection and API startup to fail with:
 
-1. **Collaborative agents:** Can specialized agents share evidence and delegate tasks reliably?
-2. **Agent safety:** Can simple identity/permission policies prevent unauthorized tool actions?
-3. **Agent evaluation:** Can multi-step agent runs be measured for correctness, grounding, safety, latency, and tool-use efficiency?
+```text
+ModuleNotFoundError: No module named 'app'
+```
 
-The demo domain is **enterprise incident investigation**, not telecom production operations. This keeps the project independent while demonstrating transferable agentic-AI engineering skills.
+The project has now been reorganized into a real Python package:
+
+```text
+agentlab/
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── models.py
+│   ├── orchestrator.py
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── planner.py
+│   │   ├── retriever.py
+│   │   ├── analyst.py
+│   │   ├── safety.py
+│   │   └── reviewer.py
+│   └── services/
+│       ├── __init__.py
+│       ├── retrieval.py
+│       ├── security.py
+│       └── store.py
+├── data/
+│   └── knowledge.txt
+├── tests/
+│   └── test_agentlab.py
+├── benchmark.py
+├── ui.py
+├── requirements.txt
+└── Dockerfile
+```
 
 ## Features
 
 - FastAPI backend
 - Streamlit experimental UI
-- Multi-agent orchestration in pure Python
 - Planner, Retrieval, Analyst, Safety, and Reviewer agents
-- Local RAG-style retrieval using TF-IDF
-- Tool registry with role-based permissions
-- Shared run context and trace logging
-- Prompt-injection/adversarial safety checks
-- Automated evaluation benchmark
+- TF-IDF retrieval over local enterprise-style knowledge
+- Role-based authorization for tool actions
+- Prompt-injection pattern detection
+- Evidence-grounded responses with refusal to invent evidence when none is retrieved
+- Composite run scoring across grounding, permissions, and safety
 - SQLite audit trail
-- REST APIs
-- Pytest tests
-- Dockerfile
+- Traceable multi-agent runs
+- Automated benchmark and Pytest validation
+- Docker support
 
-No FPGA, embedded system, or other hardware is required. No paid LLM API is required.
+No paid LLM API is required.
 
 ## Architecture
 
-User task
-→ Planner Agent
-→ Retrieval Agent
-→ Analyst Agent
-→ Safety Agent
-→ Reviewer Agent
-→ Final structured result
+```text
+Investigation request
+        ↓
+Planner Agent
+        ↓
+Safety Agent
+        ↓
+Retrieval Agent ── role authorization
+        ↓
+Analyst Agent  ── evidence-grounded assessment
+        ↓
+Reviewer Agent ── grounding / permission / safety score
+        ↓
+Structured response + auditable trace + SQLite record
+```
 
-Every step is stored as an auditable trace.
+If the safety scan detects a suspicious instruction pattern, the investigation is blocked before retrieval/analysis.
 
 ## Install
 
-```bash
+```powershell
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-## Run API
-
-```bash
-uvicorn app.main:app --reload
-```
-
-Open:
-`http://127.0.0.1:8000/docs`
-
-## Run UI
-
-In another terminal:
-
-```bash
-streamlit run ui.py
-```
-
-## Run benchmark
-
-```bash
-python benchmark.py
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 ```
 
 ## Run tests
 
-```bash
-pytest -q
+```powershell
+python -m pytest -q
 ```
 
-## Optional future extensions
+Verified after the package fix:
 
-- Replace TF-IDF with Sentence Transformers + FAISS
-- Add LangGraph/CrewAI orchestration
-- Connect a local Ollama model
-- Add React/TypeScript frontend
-- Add JWT/OAuth delegated identity
-- Add experiment tracking with MLflow
-- Add telecom-specific datasets only after obtaining suitable public/synthetic data
+```text
+5 passed
+```
+
+## Run benchmark
+
+```powershell
+python benchmark.py
+```
+
+The bundled benchmark covers:
+
+- a normal incident-investigation request
+- a prompt-injection request that should be blocked
+- a viewer-role request that must respect restricted analysis permissions
+
+See [RESULTS.md](RESULTS.md) for the validated benchmark summary.
+
+## Run API
+
+```powershell
+python -m uvicorn app.main:app --reload
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Main routes:
+
+- `GET /health`
+- `POST /investigate`
+- `GET /runs`
+
+## Run UI
+
+In another terminal using the same environment:
+
+```powershell
+python -m streamlit run ui.py
+```
+
+The UI calls the FastAPI service at `http://127.0.0.1:8000` by default.
+
+## Roles
+
+- `viewer`: knowledge retrieval only
+- `engineer`: retrieval + incident analysis
+- `admin`: retrieval + analysis + action permission in the policy registry
+
+The current prototype exposes investigation workflows only; the `create_action` permission is reserved for extension work and is not an autonomous production-action endpoint.
+
+## Safety and evaluation scope
+
+AgentLab is a deterministic portfolio prototype. The prompt scanner uses explicit suspicious-string patterns, not a complete adversarial-defense system. TF-IDF retrieval and heuristic scoring demonstrate reproducible agent orchestration and evaluation, not production-grade semantic retrieval or a calibrated safety guarantee.
+
+Future extensions can include Sentence Transformers/FAISS, local Ollama models, delegated identity, MLflow experiment tracking, broader adversarial suites, and domain-specific public datasets.
